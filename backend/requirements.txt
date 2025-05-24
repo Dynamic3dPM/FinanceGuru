@@ -6,3 +6,4 @@ python-dotenv
 unstructured[local-inference] 
 ollama
 google-cloud-texttospeech
+gTTS
