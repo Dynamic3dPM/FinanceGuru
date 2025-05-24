@@ -23,6 +23,7 @@ class FinancialAnalysis(BaseModel):
     summary: str
     suggestions: List[str]
     transactions_identified: Optional[List[Transaction]] = None
+    spoken_response: Optional[str] = None
     # raw_llm_response: Optional[Dict[Any, Any]] = None # For debugging
 
 class TTSRequest(BaseModel):

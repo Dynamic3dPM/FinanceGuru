@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from typing import List # Keep if needed for other response models
 
 # Placeholder for future service integrations
-# from app.services.document_parser import process_document
-# from app.services.llm_service import analyze_text_with_llm
+from app.services.document_parser import parse_uploaded_document # Updated import
+from app.services.llm_service import analyze_text_with_llm
 # from app.services.tts_service import generate_speech_from_text
 
 from app.models import schemas # Import your Pydantic models
@@ -21,38 +21,53 @@ async def health_check():
 @router.post("/upload-statement", response_model=schemas.FileUploadResponse, tags=["Financial Documents"])
 async def upload_financial_statement(file: UploadFile = File(...)):
     """
-    Placeholder endpoint to upload a financial statement (PDF, image, etc.).
+    Uploads and parses a financial statement.
     """
     if not file:
         raise HTTPException(status_code=400, detail="No file uploaded")
 
     # Basic file validation (example)
-    allowed_content_types = ["application/pdf", "image/jpeg", "image/png"]
-    if file.content_type not in allowed_content_types:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type. Allowed types: {', '.join(allowed_content_types)}"
-        )
+    # You might want to expand this or make it more robust
+    # allowed_content_types = ["application/pdf", "image/jpeg", "image/png", "text/plain", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+    # if file.content_type not in allowed_content_types:
+    #     raise HTTPException(
+    #         status_code=400,
+    #         detail=f"Invalid file type: {file.content_type}. Allowed types: {', '.join(allowed_content_types)}"
+    #     )
 
-    # In a real scenario, you would save the file or process it immediately.
-    # For now, just return a success message.
-    # content = await file.read()
-    # result_message = await process_document(file.filename, content, file.content_type)
+    try:
+        content = await file.read()
+        # Use the new function from document_parser
+        parsed_elements = parse_uploaded_document(content, file.filename)
 
-    return {
-        "filename": file.filename,
-        "content_type": file.content_type,
-        "message": f"Successfully received {file.filename}. Processing would happen here."
-        # "message": result_message # When process_document is implemented
-    }
+        if not parsed_elements:
+            raise HTTPException(status_code=500, detail="Failed to parse document")
+
+        # For now, let's just return the number of elements found.
+        # You can adapt this to return the actual content or a summary.
+        return {
+            "filename": file.filename,
+            "content_type": file.content_type,
+            "message": f"Successfully parsed {file.filename}. Found {len(parsed_elements)} elements.",
+            # "elements": [str(el) for el in parsed_elements] # Optionally return elements
+        }
+    except HTTPException as e:
+        # Re-raise HTTPExceptions to be handled by FastAPI
+        raise e
+    except Exception as e:
+        # Catch any other exceptions during processing
+        raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+    finally:
+        await file.close()
+
 
 # Add more endpoints here for analysis, TTS, etc.
 # Example:
-# @router.post("/analyze-data", response_model=schemas.FinancialAnalysis, tags=["Analysis"])
-# async def analyze_data(request: schemas.AnalysisRequest):
-#     # analysis_result = await analyze_text_with_llm(request.text_content)
-#     # return analysis_result
-#     return {"summary": "Analysis placeholder", "suggestions": ["Suggestion 1"]}
+@router.post("/analyze-data", response_model=schemas.FinancialAnalysis, tags=["Analysis"])
+async def analyze_data(request: schemas.AnalysisRequest):
+    analysis_result = await analyze_text_with_llm(request.text_content)
+    return analysis_result
+    # return {"summary": "Analysis placeholder", "suggestions": ["Suggestion 1"]}
 
 # @router.post("/generate-tts", response_model=schemas.TTSResponse, tags=["TTS"])
 # async def generate_tts(request: schemas.TTSRequest):
