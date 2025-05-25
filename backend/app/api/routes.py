@@ -8,8 +8,10 @@ from app.services.llm_service import analyze_text_with_llm
 # from app.services.tts_service import generate_speech_from_text
 
 from app.models import schemas # Import your Pydantic models
+from app.agents.finance_agent import FinanceAIAgent
 
 router = APIRouter()
+agent = FinanceAIAgent()
 
 @router.get("/health", tags=["Health Check"])
 async def health_check():
@@ -74,3 +76,12 @@ async def analyze_data(request: schemas.AnalysisRequest):
 #     # audio_url = await generate_speech_from_text(request.text)
 #     # return {"audio_content_url": audio_url, "message": "TTS generated"}
 #     return {"message": "TTS placeholder"}
+
+@router.post("/agent-analyze", response_model=schemas.FinancialAnalysis, tags=["Analysis"])
+async def agent_analyze(file: UploadFile = File(...)):
+    content = await file.read()
+    try:
+        result = await agent.process_statement(content, file.filename)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")

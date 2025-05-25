@@ -4,6 +4,7 @@ import os
 from tempfile import NamedTemporaryFile
 from pydub import AudioSegment
 import re
+from datetime import datetime
 
 def split_text(text, max_length=1000):
     # Split text into sentences, then group into chunks <= max_length
@@ -51,6 +52,24 @@ def synthesize_summary_to_mp3(db_path: str, output_path: str):
     for tf in temp_files:
         os.remove(tf)
     return output_path
+
+def generate_speech_from_text(text: str, output_dir: str = "backend/"):
+    """
+    Generate speech from text using gTTS, save as MP3, and return the file path in a dict.
+    """
+    if not text or not text.strip():
+        return {"audio_content_url": None, "message": "No text provided for TTS."}
+    # Clean up text for TTS
+    text = text.replace('—', '-')
+    text = text.replace('..', '.')
+    text = text.replace('  ', ' ')
+    text = text.strip()
+    # Generate a unique filename
+    filename = f"financial_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+    output_path = os.path.join(output_dir, filename)
+    tts = gTTS(text=text, lang='en', slow=False)
+    tts.save(output_path)
+    return {"audio_content_url": output_path, "message": "TTS generated successfully."}
 
 # Example usage (uncomment to run directly):
 # synthesize_summary_to_mp3(
