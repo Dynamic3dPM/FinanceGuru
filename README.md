@@ -1,54 +1,126 @@
-# FinanceGuru
+# 📊 FinanceGuru - AI-Powered Financial Analysis Platform
 
-FinanceGuru is an intelligent application designed to help you gain insights from your financial documents. It leverages the power of Large Language Models (LLMs) to understand and process unstructured data, allowing you to ask questions and get answers in natural language.
+FinanceGuru is a cutting-edge financial analysis platform that combines Hugging Face Transformers, RAG (Retrieval-Augmented Generation), and advanced temporal document processing to provide intelligent financial insights. Upload your bank statements, credit card bills, and financial documents to receive comprehensive AI-powered analysis with both text and audio summaries.
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Features](#features)
+- [Key Features](#key-features)
+- [AI & Technology Stack](#ai--technology-stack)
 - [Architecture](#architecture)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
   - [Running with Docker Compose](#running-with-docker-compose)
-- [Running a Local Ollama LLM](#running-a-local-ollama-llm)
-- [How FinanceGuru Works with Unstructured Data](#how-financeguru-works-with-unstructured-data)
+- [API Endpoints](#api-endpoints)
+- [Temporal Analysis & RAG System](#temporal-analysis--rag-system)
+- [How FinanceGuru Works](#how-financeguru-works)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Overview
 
-FinanceGuru aims to simplify the way you interact with financial documents. Instead of manually sifting through pages of text, you can upload your documents and let FinanceGuru, powered by a local Ollama LLM, do the heavy lifting. Ask questions about your financial data, get summaries, or find specific information quickly and efficiently.
+FinanceGuru revolutionizes personal finance management through AI-powered document analysis. Instead of manually reviewing financial statements, simply upload your documents and receive intelligent, context-aware analysis that remembers your financial history and provides temporal comparisons like "Your April spending vs May spending."
 
-## Features
+**🎯 Perfect for:** Personal finance tracking, budget analysis, spending pattern identification, financial trend monitoring, and accessible financial insights through audio summaries.
 
-*   **Document Upload:** Supports various document formats for analysis.
-*   **Natural Language Queries:** Interact with your documents using plain English.
-*   **Local LLM Powered:** Utilizes Ollama to run LLMs locally, ensuring data privacy and control.
-*   **Text-to-Speech (TTS):** (Optional) Get answers read out to you.
-*   **User-Friendly Interface:** Easy-to-use web interface for seamless interaction.
+## Key Features
+
+### 🤖 **Advanced AI Integration**
+- **Hugging Face Transformers**: Microsoft Phi-2 and BlenderBot models for natural language generation
+- **Fallback System**: Automatic model switching for reliability
+- **4-bit Quantization**: Memory-efficient model loading with CUDA acceleration
+- **Natural Speech**: Human-like financial analysis responses
+
+### 📚 **RAG (Retrieval-Augmented Generation) System**
+- **ChromaDB Vector Database**: Semantic search across all your financial documents
+- **Smart Document Memory**: Contextual analysis using historical financial data
+- **Cross-Document Intelligence**: Pattern recognition across multiple statements
+- **Metadata-Rich Storage**: Temporal and document metadata for enhanced retrieval
+
+### ⏰ **Temporal Analysis Engine**
+- **Smart Date Recognition**: Automatically extracts dates from any format (MM/DD/YYYY, "January 15, 2025", etc.)
+- **Month-to-Month Comparison**: "Your April vs May spending increased by 15%"
+- **Historical Trends**: Analysis based on document chronology and patterns
+- **Statement Period Detection**: Identifies billing cycles and financial periods
+
+### 📄 **Intelligent Document Processing**
+- **Multi-Format Support**: PDF, DOC, DOCX, TXT, CSV, JSON, XML, HTML
+- **Unstructured Library**: Robust parsing of complex financial documents
+- **Automatic Text Extraction**: Clean extraction from bank statements and bills
+- **Secure Processing**: Temporary file handling with automatic cleanup
+
+### 🔊 **Text-to-Speech Integration**
+- **Google TTS**: Converts analysis to natural-sounding audio
+- **Comprehensive Audio**: Full financial rundown including all statements
+- **Single Output**: Always generates `latest_financial_analysis.mp3`
+- **Accessibility**: Perfect for visually impaired users or hands-free listening
+
+### 💾 **Robust Data Management**
+- **SQLite Databases**: Interaction history and RAG document storage
+- **Vector Embeddings**: Semantic similarity search capabilities
+- **Metadata Flattening**: ChromaDB-compatible temporal data storage
+- **Transaction Safety**: Error recovery and database integrity
+
+## AI & Technology Stack
+
+### **AI Models**
+- **Primary**: `microsoft/phi-2` (2.7B parameters) - Advanced reasoning and financial analysis
+- **Fallback**: `facebook/blenderbot-400M-distill` - Conversational AI backup
+- **Embeddings**: `sentence-transformers/all-mpnet-base-v2` - Semantic document search
+
+### **Core Technologies**
+- **Backend**: FastAPI (Python) with async processing
+- **Frontend**: Vue.js 3 with modern UI components  
+- **Vector Database**: ChromaDB for semantic document storage
+- **Document Processing**: Unstructured.io for robust parsing
+- **AI Framework**: Hugging Face Transformers with PyTorch
+- **Audio**: Google Text-to-Speech (gTTS)
+
+### **Data Processing**
+- **Date Extraction**: Advanced regex patterns with `dateutil` parsing
+- **Text Chunking**: Intelligent document segmentation for RAG
+- **Metadata Extraction**: Financial document structure recognition
+- **Temporal Analysis**: Cross-document pattern recognition
 
 ## Architecture
 
-FinanceGuru is a full-stack application composed of:
+FinanceGuru features a modern microservices architecture designed for scalability and maintainability:
 
-*   **Backend:** A Python-based API (likely FastAPI) responsible for document processing, LLM interaction, and serving data to the frontend.
-    *   `app/services/document_parser.py`: Handles the extraction of text and relevant information from uploaded documents.
-    *   `app/services/llm_service.py`: Manages communication with the Ollama LLM, sending processed data and queries, and receiving insights.
-    *   `app/services/tts_service.py`: Provides text-to-speech functionality for responses.
-*   **Frontend:** A Vue.js single-page application (SPA) providing the user interface.
-*   **Database:** (Specify if any, e.g., for user accounts, document metadata)
-*   **LLM:** Ollama, for running language models locally.
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Vue.js SPA    │    │   FastAPI        │    │  ChromaDB       │
+│   Frontend      │◄──►│   Backend        │◄──►│  Vector Store   │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │
+                       ┌────────▼────────┐
+                       │  Hugging Face   │
+                       │  Transformers   │
+                       └─────────────────┘
+```
+
+### **Backend Services**
+- **`document_parser.py`**: Multi-format document processing with temporal extraction
+- **`hf_llm_service.py`**: Hugging Face model integration with advanced prompt engineering
+- **`rag_service.py`**: ChromaDB vector operations and semantic search
+- **`tts_service.py`**: Audio generation and file management
+- **`llm_service.py`**: High-level AI orchestration and response coordination
+
+### **Database Architecture**
+- **`llm_interactions.sqlite`**: User interactions, analysis history, and system logs
+- **`rag_documents.sqlite`**: Document metadata and chunking information
+- **`chroma.sqlite3`**: Vector embeddings and semantic search indices
 
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
-*   [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/install/)
-*   [Node.js and npm](https://nodejs.org/) (for frontend development/contribution)
-*   [Python](https://www.python.org/downloads/) (for backend development/contribution)
-*   [Ollama](https://ollama.ai/)
+*   **[Docker](https://www.docker.com/get-started)** and **[Docker Compose](https://docs.docker.com/compose/install/)** (recommended)
+*   **[Python 3.8+](https://www.python.org/downloads/)** with pip
+*   **[Node.js 16+](https://nodejs.org/)** and npm/yarn
+*   **GPU Support** (optional): CUDA-compatible GPU for faster AI inference
+*   **Minimum RAM**: 8GB (16GB recommended for optimal performance)
 
 ## Getting Started
 
@@ -74,16 +146,32 @@ Before you begin, ensure you have the following installed:
     pip install -r requirements.txt
     ```
 4.  **Configure environment variables:**
-    Create a `.env` file in the `backend` directory and add necessary configurations, especially the Ollama API endpoint.
-    Example `.env` content:
+    Create a `.env` file in the `backend` directory with necessary configurations:
     ```env
-    OLLAMA_API_BASE_URL=http://localhost:11434
-    # Add other configurations as needed
+    # AI Model Configuration
+    HF_MODEL_NAME=microsoft/phi-2
+    HF_FALLBACK_MODEL=facebook/blenderbot-400M-distill
+    
+    # RAG Configuration  
+    EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
+    CHUNK_SIZE=1000
+    CHUNK_OVERLAP=200
+    
+    # Database paths
+    DATABASE_URL=sqlite:///./llm_interactions.sqlite
+    RAG_DATABASE_URL=sqlite:///./rag_documents.sqlite
+    CHROMA_DB_PATH=./chroma_db
+    
+    # Optional: GPU acceleration
+    USE_CUDA=true
     ```
-5.  **Run the backend server:**
-    (Assuming FastAPI with Uvicorn, check your `main.py` for the exact command)
+5.  **Initialize databases:**
     ```bash
-    uvicorn app.main:app --reload
+    python -c "from app.services.rag_service import rag_service; rag_service.initialize_database()"
+    ```
+6.  **Run the backend server:**
+    ```bash
+    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ```
 
 ### Frontend Setup (Manual)
@@ -106,67 +194,212 @@ Before you begin, ensure you have the following installed:
 
 This is the recommended way to run the application for ease of setup.
 
-1.  **Ensure Ollama is running locally and accessible.** (See [Running a Local Ollama LLM](#running-a-local-ollama-llm))
-2.  **From the root of the project, build and start the services:**
+1.  **From the root of the project, build and start the services:**
     ```bash
     docker-compose up --build
     ```
-    This command will build the images for the backend and frontend (if Dockerfiles are configured for both) and start the services defined in `docker-compose.yml`.
+2.  **Access the application:**
+    - **Frontend**: http://localhost:5173
+    - **Backend API**: http://localhost:8000
+    - **API Documentation**: http://localhost:8000/docs
 
-## Running a Local Ollama LLM
+The Docker setup automatically handles:
+- Database initialization
+- Model downloading and caching
+- Environment configuration
+- Service orchestration
 
-FinanceGuru relies on a locally running Ollama instance to power its LLM capabilities. This ensures your data remains private and under your control.
+## API Endpoints
 
-1.  **Install Ollama:**
-    Follow the instructions on the [official Ollama website](https://ollama.ai/) to download and install it for your operating system.
+### **Document Management**
+```bash
+# Upload financial documents
+POST /api/v1/upload-statement
+Content-Type: multipart/form-data
 
-2.  **Download an LLM model:**
-    Ollama supports various models. You can pull a model using the command line. For example, to download Llama 2 (a popular open-source model):
-    ```bash
-    ollama pull llama2
-    ```
-    Other models like `mistral` or `phi` are also available. Check the [Ollama model library](https://ollama.ai/library) for more options.
+# List stored documents  
+GET /api/v1/rag/documents
 
-3.  **Run Ollama (if not already running as a service):**
-    Typically, Ollama runs as a background service after installation. If you need to run it manually or ensure it's active:
-    ```bash
-    ollama serve
-    ```
-    By default, Ollama serves its API at `http://localhost:11434`.
+# Delete specific document
+DELETE /api/v1/rag/documents/{document_id}
 
-4.  **Configure FinanceGuru to use Ollama:**
-    Ensure your backend application is configured to point to your local Ollama instance. This is usually done via an environment variable (e.g., `OLLAMA_API_BASE_URL=http://localhost:11434`) in the backend's `.env` file or Docker Compose configuration.
+# Search documents semantically
+POST /api/v1/rag/search
+{
+  "query": "restaurant expenses in April",
+  "limit": 5
+}
+```
 
-## How FinanceGuru Works with Unstructured Data
+### **Financial Analysis**
+```bash
+# Comprehensive AI analysis
+POST /api/v1/analyze-data
+{
+  "prompt": "Compare my April vs May spending",
+  "use_rag": true,
+  "use_hf": true
+}
 
-Unstructured data, such as text from PDFs, Word documents, or other financial reports, can be challenging to analyze programmatically. FinanceGuru addresses this using the following workflow:
+# Returns:
+# - Detailed text analysis
+# - Historical comparisons  
+# - Audio file path (MP3)
+# - Actionable suggestions
+```
 
-1.  **Document Ingestion:** You upload your financial documents through the application's interface.
-2.  **Text Extraction & Parsing (`document_parser.py`):**
-    The backend's `document_parser.py` service is responsible for processing these uploaded files. It extracts raw text content and potentially performs initial structuring or cleaning (e.g., removing irrelevant artifacts, identifying sections). The specific parsing capabilities would depend on the libraries and methods implemented in this module.
-3.  **LLM Interaction (`llm_service.py`):**
-    *   Once the text is extracted, the `llm_service.py` takes over. When you ask a question or request a summary, this service formulates a prompt containing your query and the relevant extracted text from your document(s).
-    *   This prompt is then sent to the locally running Ollama LLM.
-    *   The LLM processes the information and generates a response based on its understanding of the text and your query.
-4.  **Response Delivery:**
-    The LLM's response is sent back to the backend, which then relays it to the frontend to be displayed to you. If TTS is enabled, the `tts_service.py` might convert the textual response into speech.
+### **System Health**
+```bash
+# API health check
+GET /health
 
-By leveraging an LLM, FinanceGuru can:
+# Interactive documentation
+GET /docs
+```
 
-*   **Understand context:** LLMs are adept at understanding nuances and context within large blocks of text.
-*   **Perform semantic search:** Find information relevant to your query even if the exact keywords are not present.
-*   **Summarize content:** Generate concise summaries of lengthy documents.
-*   **Answer questions:** Provide answers based on the information contained within the documents.
+## Temporal Analysis & RAG System
 
-This approach allows for flexible and powerful interaction with your financial data, moving beyond simple keyword searches to a more intuitive, conversational analysis.
+### **Smart Date Recognition**
+FinanceGuru automatically extracts and understands dates from your financial documents:
+
+```python
+# Supported date formats:
+"Statement Date: April 15, 2025"
+"04/15/2025" 
+"2025-04-15"
+"Period: April 1 - April 30, 2025"
+"Billing Cycle: 04/01/25 - 04/30/25"
+```
+
+### **Flattened Metadata Storage**
+Documents are stored with rich temporal metadata compatible with ChromaDB:
+
+```json
+{
+  "filename": "april_statement.pdf",
+  "statement_date": "2025-04-15T00:00:00",
+  "month_year": "April 2025", 
+  "statement_period": "April 2025",
+  "extracted_dates_count": 3,
+  "date_0_raw": "04/15/25",
+  "date_0_parsed": "2025-04-15T00:00:00",
+  "date_0_month": 4,
+  "date_0_year": 2025,
+  "date_0_month_name": "April"
+}
+```
+
+### **Contextual Analysis Examples**
+- **"How did my spending change from April to May?"**
+- **"What categories increased the most this month?"**
+- **"Show me my restaurant expenses over the last 3 months"**
+- **"Compare my current month to the same period last year"**
+
+## How FinanceGuru Works
+
+### **1. Document Processing Pipeline**
+```mermaid
+graph LR
+    A[Upload Document] --> B[Parse & Extract Text]
+    B --> C[Extract Dates & Metadata]
+    C --> D[Chunk Content]
+    D --> E[Generate Embeddings]
+    E --> F[Store in ChromaDB]
+```
+
+### **2. AI Analysis Workflow**
+```mermaid
+graph TD
+    A[User Query] --> B[RAG Document Retrieval]
+    B --> C[Context Assembly]
+    C --> D[Hugging Face Model]
+    D --> E[Generate Analysis]
+    E --> F[Text Response]
+    F --> G[Audio Generation]
+    G --> H[Return Results]
+```
+
+### **3. Temporal Intelligence**
+FinanceGuru's temporal analysis engine provides:
+
+- **Automatic Date Recognition**: Extracts dates from any document format
+- **Historical Context**: "Based on your previous 3 months of statements..."
+- **Trend Analysis**: "Your dining expenses have increased 20% since March"
+- **Comparative Insights**: "This month's spending is 5% below your average"
+
+### **4. Memory & Context**
+The RAG system ensures FinanceGuru remembers your financial history:
+
+- **Cross-Document Analysis**: Compares data across multiple statements
+- **Semantic Search**: Finds relevant information even with different wording
+- **Pattern Recognition**: Identifies recurring expenses and trends
+- **Contextual Responses**: Uses historical data to provide richer insights
+
+### **5. Audio Accessibility**
+Every analysis includes comprehensive audio summaries:
+
+- **Full Financial Rundown**: Complete overview of all statements
+- **Natural Speech**: Human-like delivery of financial insights
+- **Accessibility Support**: Perfect for visually impaired users
+- **Hands-Free Operation**: Listen while commuting or multitasking
+
+### **Example Analysis Output**
+```json
+{
+  "analysis": "Your May 2025 spending increased by $234 compared to April...",
+  "summary": "Higher restaurant and entertainment expenses drove the increase...",
+  "suggestions": ["Consider setting a dining budget", "Track entertainment expenses"],
+  "audio_file": "latest_financial_analysis.mp3",
+  "temporal_context": {
+    "current_month": "May 2025",
+    "comparison_months": ["April 2025", "March 2025"],
+    "trends": ["Dining up 15%", "Gas down 8%"]
+  }
+}
+```
 
 ## Contributing
 
-Contributions are welcome! Please refer to `CONTRIBUTING.md` for guidelines. (You'll need to create this file if you want specific contribution guidelines).
+We welcome contributions to FinanceGuru! Here's how you can help:
+
+### **Areas for Contribution**
+- **AI Model Integration**: Add support for new Hugging Face models
+- **Document Parsing**: Enhance support for additional financial document formats
+- **Temporal Analysis**: Improve date recognition and pattern analysis
+- **Frontend Features**: UI/UX improvements and new visualization components
+- **Performance**: Optimization of model inference and database operations
+
+### **Development Setup**
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Add tests for new functionality
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### **Code Standards**
+- Follow PEP 8 for Python code
+- Use ESLint configuration for JavaScript/Vue.js
+- Include docstrings for all functions and classes
+- Add type hints for Python functions
+- Write comprehensive tests for new features
 
 ## License
 
-(Specify your license here, e.g., MIT License. If you don't have one yet, you might consider adding one like MIT or Apache 2.0.)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- **Hugging Face** for transformer models and tokenizers
+- **ChromaDB** for vector database capabilities
+- **Unstructured.io** for robust document parsing
+- **FastAPI** for the high-performance backend framework
+- **Vue.js** for the reactive frontend framework
 
 ---
+
+**🚀 Ready to transform your financial document analysis? Get started with FinanceGuru today!**
+
+*For support or questions, please open an issue on GitHub or contact the development team.*
 
