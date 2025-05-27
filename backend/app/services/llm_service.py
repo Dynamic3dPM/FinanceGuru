@@ -6,6 +6,10 @@ from app.core.config import settings
 from app.models.schemas import FinancialAnalysis # Assuming you want to structure the output
 from gtts import gTTS
 
+# Import the new Hugging Face service
+from app.services.hf_llm_service import hf_llm_service
+from app.services.rag_service import rag_service
+
 # Database setup
 DB_PATH = "llm_interactions.sqlite" # Consider making this configurable
 
@@ -24,9 +28,18 @@ def init_db():
                 generated_text TEXT,
                 summary TEXT,
                 suggestions TEXT,
-                spoken_response TEXT
+                spoken_response TEXT,
+                rag_context TEXT
             )
         """)
+        
+        # Add rag_context column if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("ALTER TABLE llm_responses ADD COLUMN rag_context TEXT")
+        except sqlite3.OperationalError:
+            # Column already exists
+            pass
+            
         conn.commit()
     except sqlite3.Error as e:
         print(f"Database initialization error: {e}") # Log this properly in a real app
@@ -37,15 +50,15 @@ def init_db():
 # Initialize DB when the module is loaded
 init_db()
 
-def save_llm_interaction(prompt: str, model: str, raw_response: dict, generated_text: str, summary: str, suggestions: list[str], spoken_response: str):
-    """Saves the LLM interaction details to the SQLite database, including spoken_response."""
+def save_llm_interaction(prompt: str, model: str, raw_response: dict, generated_text: str, summary: str, suggestions: list[str], spoken_response: str, rag_context: str = ""):
+    """Saves the LLM interaction details to the SQLite database, including spoken_response and rag_context."""
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO llm_responses (timestamp, prompt, model, raw_response, generated_text, summary, suggestions, spoken_response)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (datetime.now(), prompt, model, json.dumps(raw_response), generated_text, summary, json.dumps(suggestions), spoken_response))
+            INSERT INTO llm_responses (timestamp, prompt, model, raw_response, generated_text, summary, suggestions, spoken_response, rag_context)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (datetime.now(), prompt, model, json.dumps(raw_response), generated_text, summary, json.dumps(suggestions), spoken_response, rag_context))
         conn.commit()
     except sqlite3.Error as e:
         print(f"Error saving LLM interaction to database: {e}") # Log this
@@ -65,14 +78,39 @@ def synthesize_spoken_response_to_mp3(spoken_response: str, output_path: str):
     tts.save(output_path)
     return output_path
 
-async def analyze_text_with_llm(text_content: str) -> FinancialAnalysis:
+async def analyze_text_with_llm(text_content: str, use_rag: bool = True, use_hf: bool = True) -> FinancialAnalysis:
     """
-    Sends text to Ollama for analysis, returns a structured response, and synthesizes spoken_response to MP3.
+    Analyze text with LLM. Can use either Hugging Face (default) or Ollama with optional RAG.
+    
+    Args:
+        text_content: The financial text to analyze
+        use_rag: Whether to use RAG for context retrieval (default: True)
+        use_hf: Whether to use Hugging Face instead of Ollama (default: True)
+    """
+    
+    if use_hf:
+        # Use the new Hugging Face service with RAG
+        return await hf_llm_service.analyze_text_with_llm_and_rag(text_content, use_rag=use_rag)
+    
+    # Legacy Ollama implementation (kept for backward compatibility)
+    return await _analyze_text_with_ollama(text_content, use_rag=use_rag)
+
+async def _analyze_text_with_ollama(text_content: str, use_rag: bool = True) -> FinancialAnalysis:
+    """
+    Legacy function that sends text to Ollama for analysis with optional RAG support.
     """
     if not settings.OLLAMA_API_URL:
         raise ValueError("OLLAMA_API_URL is not configured.")
 
-    current_prompt = f"""
+    # Get RAG context if enabled
+    rag_context = ""
+    if use_rag:
+        query = f"financial analysis spending categories budgeting tips: {text_content[:200]}"
+        rag_context = rag_service.get_context_for_query(query, max_context_length=1500)
+
+    context_section = f"\nRelevant context from previous documents:\n{rag_context}\n" if rag_context else ""
+
+    current_prompt = f"""{context_section}
 Act as a friendly, personal financial assistant. I'm looking over your financial statement, and I want to talk about what you spent on in a warm, conversational, first-person tone, perfect for text-to-speech.
 
 Instructions:
@@ -139,7 +177,7 @@ Text:
             )
 
             # Synthesize spoken_response to MP3
-            output_path = f"financial_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+            output_path = "latest_financial_analysis.mp3"  # Fixed filename - always overwrites
             synthesize_spoken_response_to_mp3(spoken_response, output_path)
 
             return FinancialAnalysis(
@@ -184,17 +222,36 @@ Text:
             )
             return FinancialAnalysis(summary=f"An unexpected error occurred: {str(e)}", suggestions=[])
 
-# Example of a more specific prompt for transaction extraction if you want the LLM to output structured data:
-# PROMPT_TEMPLATE = """
-# Extract all financial transactions from the following text.
-# For each transaction, provide the date, description, amount, and category.
-# If a value is not present, use "N/A".
-# Format the output as a JSON list of objects, where each object represents a transaction.
-# Example:
-# [
-#   { "date": "YYYY-MM-DD", "description": "Grocery Store", "amount": 50.25, "category": "Groceries" },
-#   { "date": "YYYY-MM-DD", "description": "Salary", "amount": 2000.00, "category": "Income" }
-# ]
-# Text:
-# {text_content}
-# """
+# RAG utility functions
+def add_document_to_rag(document_id: str, filename: str, content: str, 
+                       content_type: str = "text/plain", metadata: dict = None) -> bool:
+    """Add a document to the RAG system for future context retrieval."""
+    try:
+        return rag_service.add_document(document_id, filename, content, content_type, metadata)
+    except Exception as e:
+        print(f"Error adding document to RAG: {e}")
+        return False
+
+def remove_document_from_rag(document_id: str) -> bool:
+    """Remove a document from the RAG system."""
+    try:
+        return rag_service.delete_document(document_id)
+    except Exception as e:
+        print(f"Error removing document from RAG: {e}")
+        return False
+
+def list_rag_documents():
+    """List all documents in the RAG system."""
+    try:
+        return rag_service.list_documents()
+    except Exception as e:
+        print(f"Error listing RAG documents: {e}")
+        return []
+
+def search_rag_documents(query: str, top_k: int = 5):
+    """Search for relevant content in the RAG system."""
+    try:
+        return rag_service.retrieve_relevant_chunks(query, top_k)
+    except Exception as e:
+        print(f"Error searching RAG documents: {e}")
+        return []

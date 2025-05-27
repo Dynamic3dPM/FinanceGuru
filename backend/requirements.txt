@@ -4,6 +4,14 @@ pydantic
 pydantic-settings
 python-dotenv
 unstructured[local-inference] 
-ollama
+transformers
+torch
+sentence-transformers
+faiss-cpu
+chromadb
+datasets
+accelerate
+bitsandbytes
 google-cloud-texttospeech
 gTTS
+httpx

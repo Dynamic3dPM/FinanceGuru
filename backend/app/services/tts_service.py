@@ -64,8 +64,8 @@ def generate_speech_from_text(text: str, output_dir: str = "backend/"):
     text = text.replace('..', '.')
     text = text.replace('  ', ' ')
     text = text.strip()
-    # Generate a unique filename
-    filename = f"financial_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp3"
+    # Use fixed filename - always overwrites previous version
+    filename = "latest_financial_analysis.mp3"
     output_path = os.path.join(output_dir, filename)
     tts = gTTS(text=text, lang='en', slow=False)
     tts.save(output_path)

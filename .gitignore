@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# any chroma db files
+chroma_db/
+
+
 # C extensions
 *.so
 
@@ -88,3 +92,7 @@ yarn-debug.log*
 yarn-error.log*
 backend/financial_analysis_20250524_223218.mp3
 backend/tests/20250212-statements-8324-.pdf
+backend/comprehensive_financial_analysis_20250526_201627.mp3
+backend/comprehensive_financial_analysis_20250526_201727.mp3
+backend/chroma_db/chroma.sqlite3
+backend/models/
