@@ -1,6 +1,7 @@
 import torch
 import sqlite3
 import json
+import re
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 from transformers import (
@@ -265,7 +266,8 @@ class HuggingFaceLLMService:
         tts.save(output_path)
         return output_path
     
-    def generate_response(self, prompt: str, max_new_tokens: int = 256, temperature: float = 0.8) -> str:
+    def generate_response(self, prompt: str, max_new_tokens: int = 256, temperature: float = 0.8, 
+                         do_sample: bool = True, top_p: float = 0.92, repetition_penalty: float = 1.1) -> str:
         """Generate a response using the Hugging Face model with optimized parameters for natural speech."""
         try:
             # Truncate prompt if it's too long for the model
@@ -278,10 +280,10 @@ class HuggingFaceLLMService:
             generation_kwargs = {
                 "max_new_tokens": min(max_new_tokens, 128),  # Reduced to stay within limits
                 "temperature": temperature,
-                "do_sample": True,
-                "top_p": 0.92,
+                "do_sample": do_sample,
+                "top_p": top_p,
                 "top_k": 40,
-                "repetition_penalty": 1.1,
+                "repetition_penalty": repetition_penalty,
                 "pad_token_id": self.tokenizer.eos_token_id,
                 "clean_up_tokenization_spaces": True
             }
@@ -831,7 +833,7 @@ OUTPUT FORMAT: Provide analysis in this structure:
 FOCUS ON: Actual spending amounts, specific categories, actionable financial advice.
 AVOID: Generic responses, conversational filler, non-financial content.
 
-Begin analysis:</prompt>
+Begin analysis:"""
 
         return prompt
 
